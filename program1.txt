@@ -1,0 +1,388 @@
+# r0  = for loop index counter, i
+# r1  = Load lsw_input_block = MEM[2*i]
+# r2  = Load msw_input_block = MEM[2*i+1]
+# r3  = value of 2*i
+# r4  = 0000_000 b9^b11^b10
+# r5  = value of p8
+# r6  = value of p4
+# r7  = value of p2
+# r8  = value of p1
+# r9  = value of p0
+# r10 = output MSW
+# r11 = output LSW
+# r12 = 30 + 2*i for output LSW
+# r13 = 0000_000 b8^b5^b6^b7, then r13 = 31 + 2*i for output MSW
+# r14 = 0000_000 b9^b11 
+# r15 = $accumulator register
+
+
+    # initialize loop counter
+    imm 0
+    mov r0   #r0 = 0
+
+    # for loop index i from 0 to 14, stop at i reaches 15
+    imm 15
+    cmp r0
+    beq 0    #LUT[0] = 274
+    
+    imm 1
+    lsl r0
+    mov r3   #r3 = 2 * r0 = 2*i
+    
+    ldr r3
+    mov r1   #r1 = MEM[r3]
+
+    imm 1
+    add r3
+    mov r2
+    ldr r2
+    mov r2   #r2 = MEM[r3+1]
+    
+
+    #calculate the value of p8
+    imm 7
+    and r2
+    mov r4   #r4 = 7 & r2 (0000_0 b11 b10 b9)
+
+    imm 2
+    lsr r4   #$accum = r4 >> 2
+    eor r4   #r4 = $accum ^ r4
+    mov r4   #r4 = 0000_0 b11 b10 b9^b11
+    imm 3
+    and r4
+    mov r4   #r4 = 3 && r4 (0000_00 b10 b9^b11)
+
+    imm 1
+    and r4
+    mov r14  #r14 = 1 & r4 (0000_000 b9^b11) 
+
+    imm 1
+    lsr r4
+    eor r4   #$accum = $accum ^ $r4
+    mov r4   #r4 = 0000_00 b10 b9^b11^b10
+    imm 1
+    and r4
+    mov r4   #r4 = 0000_000 b9^b11^b10
+
+    imm 240
+    and r1
+    mov r5   #r5 = b8  b7  b6  b5_0000
+
+    imm 3
+    lsl r5
+    eor r5
+    mov r5   #r5 = b8^b5 b7 b6 b5_0000
+    imm 224
+    and r5
+    mov r5   #r5 = b8^b5 b7 b6 0_0000
+    
+    imm 2
+    lsl r5
+    eor r5
+    mov r5   #r5 = b8^b5^b6 b7 b6 0_0000
+    imm 192
+    and r5
+    mov r5   #r5 = b8^b5^b6 b7 00_0000
+
+    imm 1
+    lsl r5 
+    eor r5
+    mov r5   #r5 = b8^b5^b6^b7 b7 00_0000
+    imm 128
+    and r5
+    mov r5   #r5 = b8^b5^b6^b7 000_0000
+    
+    imm 7
+    lsr r5
+    mov r13  #r13 = 0000_000 b8^b5^b6^b7
+ 
+    imm 7
+    lsr r5
+    eor r4
+    mov r5   #r5 = 0000_000 b8^b5^b6^b7^b9^b11^b10
+
+
+    #calculate the value of p4
+    imm 128
+    and r1
+    mov r6   #r6 = b8 000_0000
+    imm 7
+    lsr r6
+    eor r4
+    mov r6   #r6 = 0000_000 b8^b9^b11^b10
+   
+    imm 8
+    and r1
+    mov r7   #r7 = 0000_b4 000
+    imm 3
+    lsr r7
+    eor r6
+    mov r6   #r6 = 0000_000 b8^b9^b11^b10^b4
+  
+    imm 4
+    and r1
+    mov r7   #r7 = 0000_0 b3 00
+    imm 2
+    lsr r7
+    eor r6
+    mov r6   #r6 = 0000_000 b8^b9^b11^b10^b4^b3
+        
+    imm 2
+    and r1
+    mov r7   #r7 = 0000_00 b2 0
+    imm 1
+    lsr r7
+    eor r6
+    mov r6   #r6 = 0000_000 b8^b9^b11^b10^b4^b3^b2
+
+
+    #calculate the value of p2
+    imm 6
+    and r2
+    mov r7   #r7 = 0000_0 b11 b10 0
+    imm 1
+    lsr r7
+    mov r7   #r7 = 00000_00 b11 b10
+    imm 1
+    lsr r7
+    eor r7
+    mov r7   #r7 = 0000_00 b11 b11^b10
+    imm 1
+    and r7
+    mov r7   #r7 = 0000_000 b11^b10
+
+    imm 64
+    and r1
+    mov r8   #r8 = 0 b7 00_0000
+    imm 6
+    lsr r8
+    eor r7
+    mov r7   #r7 = 0000_000 b11^b10^b7
+
+    imm 32
+    and r1
+    mov r8   #r8 = 00 b6 0_0000
+    imm 5
+    lsr r8
+    eor r7
+    mov r7   #r7 = 0000_000 b11^b10^b7^b6
+
+    imm 8
+    and r1
+    mov r8   #r8 = 0000_b4 000
+    imm 3
+    lsr r8
+    eor r7
+    mov r7   #r7 = 0000_000 b11^b10^b7^b6^b4
+ 
+    imm 4
+    and r1
+    mov r8   #r8 = 0000_0 b3 00
+    imm 2
+    lsr r8
+    eor r7
+    mov r7   #r7 = 0000_000 b11^b10^b7^b6^b4^b3
+
+    imm 1  
+    and r1  
+    mov r8   #r8 = 0000_000 b1
+    eor r7  
+    mov r7   #r7 = 0000_000 b11^b10^b7^b6^b4^b3^b1
+
+    
+    #calculate the value of p1
+    imm 64 
+    and r1
+    mov r8   #r8 = 0 b7 00_0000
+    imm 6  
+    lsr r8   
+    eor r14  
+    mov r8   #r8 = 0000_000 b9^b11^b7
+
+    imm 16  
+    and r1   
+    mov r9   #r9 = 000 b5_0000
+    imm 4   
+    lsr r9  
+    eor r8   
+    mov r8   #r8 = 0000_000 b9^b11^b7^b5
+
+    imm 8   
+    and r1   
+    mov r9   #r9 = 0000_b4 000
+    imm 3   
+    lsr r9   
+    eor r8   
+    mov r8   #r8 = 0000_000 b9^b11^b7^b5^b4
+
+    imm 2   
+    and r1   
+    mov r9   #r9 = 0000_00 b2 0
+    imm 1   
+    lsr r9   
+    eor r8   
+    mov r8   #r8 = 0000_000 b9^b11^b7^b5^b4^b2
+
+    imm 1   
+    and r1   
+    mov r9   #r9 = 0000_000 b1
+    eor r8   
+    mov r8   #r8 = 0000_000 b9^b11^b7^b5^b4^b2^b1
+
+
+    #calculate the value of p0
+    imm 15 
+    and r1  
+    mov r9   #r9 = 0000_b4 b3 b2 b1
+
+    imm 3  
+    lsr r9  
+    eor r9 
+    mov r9   #r9 = 0000_b4 b3 b2 b4^b1
+    imm 7  
+    and r9  
+    mov r9   #r9 = 0000_0 b3 b2 b4^b1
+  
+    imm 2  
+    lsr r9  
+    eor r9  
+    mov r9   #r9 = 0000_0 b3 b2 b4^b1^b3
+    imm 3  
+    and r9  
+    mov r9   #r9 = 0000_00 b2 b4^b1^b3
+
+    imm 1  
+    lsr r9  
+    eor r9  
+    mov r9   #r9 = 0000_00 b2 b4^b1^b3^b2
+    imm 1  
+    and r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2
+
+    take r13 
+    eor r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2^b8^b5^b6^b7
+   
+    take r4  #$accum = r4 (0000_000 b9^b11^b10)
+    eor r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2^b8^b5^b6^b7^b9^b11^b10
+
+
+    take r5 
+    eor r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2^b8^b5^b6^b7^b9^b11^b10^p8
+
+    take r6 
+    eor r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2^b8^b5^b6^b7^b9^b11^b10^p8^p4
+
+    take r7 
+    eor r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2^b8^b5^b6^b7^b9^b11^b10^p8^p4^p2
+
+    take r8 
+    eor r9  
+    mov r9   #r9 = 0000_000 b4^b1^b3^b2^b8^b5^b6^b7^b9^b11^b10^p8^p4^p2^p1
+
+
+    #construct the 16-bit encoded version
+    #construct the encoded_block_msw
+    imm 5
+    lsl r2
+    mov r10   #r10 = b11 b10 b9 0_0000
+
+    imm 3
+    lsr r1
+    mov r11   #r11 = 000 b8_b7 b6 b5 b4
+
+    imm 30
+    and r11
+    mov r11   #r11 = 000 b8_b7 b6 b5 0
+
+    take r10
+    orr r11   #$accum = 0 0 0 b8_b7 b6 b5 0 | b11 b10 b9 0 0 0 0 0
+    mov r11   #r11 =  = b11 b10 b9 b8_b7 b6 b5 0
+
+    take r5  
+    orr r11   #$accum = b11 b10 b9 b8_b7 b6 b5 0 | 0 0 0 0 0 0 0 p8
+    mov r10   #r11 = b11 b10 b9 b8_b7 b6 b5 p8
+
+    #construct encoded_block_lsw
+    imm 4
+    lsl r1
+    mov r11   #r11 = b4  b3  b2  b1_0000
+
+    imm 224
+    and r11 
+    mov r11   #r11 = b4  b3  b2  0_0000
+
+    imm 4
+    lsl r6  
+    mov r12   #r12 =  000 p4_0000
+
+    take r11
+    orr r12
+    mov r11   #r11 =  b4  b3  b2  p4_0000
+
+    imm 3
+    lsl r1
+    mov r12   #r12 =  b5  b4  b3  b2_b1 000
+
+    imm 8
+    and r12
+    mov r12   #r12 =  0000_b1 000
+   
+    take r11
+    orr r12
+    mov r11   #r11 =  b4  b3  b2  p4_b1 000
+
+    imm 2 
+    lsl r7
+    mov r12   #r12 =  0000_0 p2 00
+    take r11
+    orr r12
+    mov r11   #r11 =  b4  b3  b2  p4_b1 p2 00
+ 
+    imm 1 
+    lsl r8
+    mov r12   #r12 =  0000_00 p1 0
+    take r11
+    orr r12
+    mov r11   #r11 =  b4  b3  b2  p4_b1 p2 p1 0
+
+    take r9 
+    orr r11
+    mov r11   #r11 =  b4  b3  b2  p4_b1 p2 p1 p0
+
+
+    # Store the encoded block in data memory (mem[30:59])
+    imm 30 
+    add r3   
+    mov r12   #r12 = $accum = 30 + r3
+    take r11  #$accum = $r11
+    str r12   #Mem[r12] = Mem[30 + r3] = $accumulator = r11
+
+    imm 31 
+    add r3   
+    mov r13   #r13 = 31 + r3
+    take r10 
+    str r13   #Mem[r13] = Mem[31 + r3] = $accumulator = r10
+
+   
+    #increment index i and repeat the for loop
+    imm 1
+    add r0
+    mov r0      
+    b 1  #LUT[1] = -275
+
+    stop
+
+
+    
+
+
+
+
+
+
+

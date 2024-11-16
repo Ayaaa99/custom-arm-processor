@@ -1,0 +1,403 @@
+#r0 = for loop index counter
+#r1 = lsw storage
+#r2 = msw storage
+#r3 = temporary register
+#r4 = temporary register
+#r5 = p values storage
+#r6 = temporary register
+
+
+decoder:
+imm 0		# Initialize 2*i = 0 (loop index)
+mov r0
+    
+decode_loop:
+#Load encoded message from data memory
+imm 30		# Load encoded_block_lsw
+add r0
+mov r1
+ldr r1
+mov r1
+imm 31		# Load encoded_block_msw
+add r0
+mov r2
+ldr r2
+mov r2
+
+
+#Check the correctness of p
+
+#Calculate the correctness of p8		
+imm 4		#Extract bits [7:4]
+lsr r2
+mov r3		
+take r3		#[7]^[3] [6]^[2] [5]^[1] [4]^[0]
+eor r2
+mov r4
+imm 15	    #Remove first 4 bits
+and r4
+mov r4		
+imm 2		#Extract bits [7]^[3] [6]^[2]
+lsr r4
+mov r3
+take r4	    #[7]^[3]^[5]^[1] [6]^[2]^[4]^[0]
+eor r3
+mov r4
+imm 3		#Keep last 2 bits
+and r4
+mov r4
+imm 1		#Extract bit [7]^[3]^[5]^[1]
+lsr r4
+mov r3	
+take r4		#[7]^[3]^[5]^[1]^[6]^[2]^[4]^[0]
+eor r3
+mov r4	
+imm 1		#Keep the last bit
+and r4
+mov r4
+take r4		#Store the result of p8 in r5
+mov r5
+
+#Calculate the correctness of p4
+imm 4		#Get encoded_block_lsw[7:4]
+lsr r1
+mov r3
+imm 4		#Get encoded_block_msw[7:4]
+lsr r2
+mov r4
+take r4		#lsw[7]^msw[7] lsw[6]^msw[6] lsw[5]^msw[5] lsw[4]^msw[4]
+eor r3
+mov r4	
+imm 2		#Extract bits lsw[7]^msw[7] lsw[6]^msw[6]
+lsr r4
+mov r3
+take r4		#lsw[7]^msw[7]^lsw[5]^msw[5] lsw[6]^msw[6]^lsw[4]^msw[4]
+eor r3
+mov r4	
+imm 3		#Keep the last 2 bits
+and r4
+mov r4
+imm 1		#Extract bit lsw[7]^msw[7]^lsw[5]^msw[5]
+lsr r4
+mov r3	
+take r4		#lsw[7]^msw[7]^lsw[5]^msw[5]^lsw[6]^msw[6]^lsw[4]^msw[4]
+eor r3
+mov r4	
+imm 1		#Keep the last bit
+and r4
+mov r4
+imm 1		#Shift p4 to index[1]
+lsl r4
+mov r4
+take r4		#Add p4 with p8
+add r5
+mov r5
+
+#Calculate the correctness of p2
+imm 204		#Get encoded_block_lsw[7:6],[3:2]
+and r1
+mov r3
+imm 204		#Get encoded_block_msw[7:6],[3:2]
+and r2
+mov r4	
+take r4		#encoded_block_lsw[7:6]^encoded_block_msw[7:6] encoded_block_lsw[3:2]^encoded_block_msw[3:2]
+eor r3
+mov r4
+imm 4		#Extract bits encoded_block_lsw[7:6]^encoded_block_msw[7:6]
+lsr r4
+mov r3	
+take r4		#encoded_block_lsw[7:6]^encoded_block_msw[7:6]^encoded_block_lsw[3:2]^encoded_block_msw[3:2]
+eor r3
+mov r4	
+imm 12		#Keep the last 2 bits
+and r4
+mov r4	
+imm 2
+lsr r4
+mov r4	
+imm 1		#Extract bit encoded_block_lsw[7]^encoded_block_msw[7]^encoded_block_lsw[3]^encoded_block_msw[3]
+lsr r4
+mov r3	
+take r4		#encoded_block_lsw[7]^[6]^[3]^[2]^encoded_block_msw[7]^[6]^[3]^[2]
+eor r3
+mov r4
+imm 1	    #Keep the last bit
+and r4
+mov r4
+imm 2		#Shift p2 to index[2]
+lsl r4
+mov r4
+take r4		#Add p2 with p4, p8
+add r5
+mov r5
+
+
+#Calculate the correctness of p1
+imm 170		#Get encoded_block_lsw[7,5,3,1]
+and r1
+mov r3
+imm 170		#Get encoded_block_msw[7,5,3,1]
+and r2
+mov r4	
+take r4		#lsw[7]^msw[7] lsw[5]^msw[5] lsw[3]^msw[3] lsw[1]^msw[1]
+eor r3
+mov r4		
+imm 4		#Extract bits lsw[7]^msw[7] lsw[5]^msw[5]
+lsr r4
+mov r3
+take r4		#lsw[7]^msw[7]^lsw[3]^msw[3] lsw[5]^msw[5]^lsw[1]^msw[1]
+eor r3
+mov r4
+imm 15		#Keep the last 4 bits
+and r4
+mov r4
+imm 2		#Extract bit lsw[7]^msw[7]^lsw[3]^msw[3]
+lsr r4
+mov r3
+take r4		#lsw[7]^msw[7]^lsw[3]^msw[3]^lsw[5]^msw[5]^lsw[1]^msw[1]
+eor r3
+mov r4
+imm 2		#Keep the bit at index[1]
+and r4
+mov r4
+imm 2		#Shift p1 to index[3]
+lsl r4
+mov r4
+take r4		#Add p1 to p2, p4, p8
+add r5
+mov r5
+
+#Calculate the correctness of p0
+take r1		#Get encoded_block_lsw[7:0]
+mov r3
+take r2		#Get encoded_block_msw[7:0]
+mov r4	
+take r4     #lsw[7]^msw[7] lsw[6]^msw[6] ... lsw[1]^msw[1] lsw[0]^msw[0]
+eor r3
+mov r4
+imm 4		#Extract bits lsw[7]^msw[7] lsw[6]^msw[6] lsw[5]^msw[5] lsw[4]^msw[4]
+lsr r4
+mov r3
+take r4		#lsw[7]^[3]^msw[7]^[3] lsw[6]^[2]^msw[6]^[2] lsw[5]^[1]^msw[5]^[1] lsw[4]^[0]^msw[4]^[0]
+eor r3
+mov r4	
+imm 15		#Keep the last 4 bits
+and r4
+mov r4
+imm 2		#Extract lsw[7]^[3]^msw[7]^[3] lsw[6]^[2]^msw[6]^[2]
+lsr r4
+mov r3	
+take r4		#lsw[7]^[5]^[3]^[1]^msw[7]^[5]^[3]^[1] lsw[6]^[4]^[2]^[0]^msw[6]^[4]^[2]^[0]
+eor r3
+mov r4	
+imm 3		#Keep the last 2 bits
+and r4
+mov r4	
+imm 1		#Extract lsw[7]^[5]^[3]^[1]^msw[7]^[5]^[3]^[1]
+lsr r4
+mov r3
+take r4		#(^lsw[7:0])^(^msw[7:0])
+eor r3
+mov r4	
+imm 1		#Keep the last bit
+and r4
+mov r4		
+imm 4		#Shift p0 to index[4]
+lsl r4
+mov r4
+take r4		#Add p0 to p1, p2, p4, p8
+add r5
+mov r5
+
+
+#Store decoded message into r1, r2	
+imm 3		#Shift b1 to index[0]
+lsr r1
+mov r3		
+imm 1		#Keep only b1
+and r3
+mov r3
+imm 4		#Shift b2-b4 to index[3:1]
+lsr r1
+mov r4
+imm 14		#Keep only b2-b4
+and r4
+mov r4	
+take r4		#Put b1-b4 together
+orr r3
+mov r3	
+imm 3		#Shift b5-b8 to the left
+lsl r2
+mov r4		
+imm 240		#Keep b5-b8 only
+and r4
+mov r4
+take r4		#Store decoded lsw b1-b8 in r1
+orr r3
+mov r1	
+imm 5		#Keep b9-b11 only for msw
+lsr r2
+mov r2
+
+
+#0 error case
+imm 0		#Determine if the results of all p’s are 0
+cmp r5
+beq 3
+
+#1 error case	
+imm 4		#Shift p0 to index[0]
+lsr r5
+mov r3
+imm 1		#Determine if p0 = 1
+cmp r3
+beq 4
+
+#2 errors case	
+imm 128		#Change F1F0 to 10
+add r2
+mov r2
+b 5
+
+one_error:
+imm 64		#Change F1F0 to 01
+add r2
+mov r2
+
+#Check the error bit		
+imm 28		#Check b1
+cmp r5
+beq 2      #Fix b1
+		
+b 7
+imm 26		#Check b2
+cmp r5
+beq 2		#Fix b2
+
+b 7
+imm 22		#Check b3
+cmp r5
+beq 2		#Fix b3
+	
+b 7    
+imm 30		#Check b4
+cmp r5
+beq 2		#Fix b4
+
+b 7		
+imm 25		#Check b5
+cmp r5
+beq 2		#Fix b5
+
+b 7	
+imm 21		#Check b6
+cmp r5
+beq 2		#Fix b6
+
+b 7	
+imm 29		#Check b7
+cmp r5
+beq 2		#Fix b7
+
+b 7	
+imm 19		#Check b8
+cmp r5
+beq 2   	#Fix b8
+
+b 7	
+imm 27		#Check b9
+cmp r5
+beq 2		#Fix b9
+
+b 7	
+imm 23		#Check b10
+cmp r5
+beq 2	    #Fix b10
+
+b 7		
+imm 31		#Check b11
+cmp r5
+beq 2		#Fix b11
+b 13        #p0, p1, p2, p4, or p8 single error case
+b1_error:	
+imm 1		#Reverse b1
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b2_error:		
+imm 2		#Reverse b2
+eor r1	
+mov r1
+b 13		#Go down 4 lines
+
+b3_error:	
+imm 4		#Reverse b3
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b4_error:		
+imm 8		#Reverse b4
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b5_error:	
+imm 16		#Reverse b5
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b6_error:	
+imm 32		#Reverse b6
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b7_error:	
+imm 64		#Reverse b7
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b8_error:	
+imm 128		#Reverse b8
+eor r1
+mov r1
+b 13		#Go down 4 lines
+
+b9_error:		
+imm 1		#Reverse b9
+eor r2
+mov r2
+b 13		#Go down 4 lines
+
+b10_error:	
+imm 2		#Reverse b10
+eor r2
+mov r2
+b 13		#Go down 4 lines
+
+b11_error:		
+imm 4		#Reverse b11
+eor r2
+mov r2
+
+end_decode:
+take r1		#Store lsw
+str r0
+imm 1		#Store msw
+add r0
+mov r6
+take r2
+str r6
+
+imm 2		#Increment data_mem pointer
+add r0
+mov r0
+imm 30		#Determine if finished
+cmp r0
+bne 6
+
+stop

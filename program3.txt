@@ -1,0 +1,178 @@
+# r0  = cnt_a: number of occurrences of the given 5-bit pattern in any byte 
+# r1  = cnt_b: number of bytes within which the pattern occurs 
+# r2  = cnt_c: number of times it occurs anywhere in the string 
+# r3  = temp
+# r4  = Outer loop counter i
+# r5  = flag of the pattern occurs in the current byte
+# r6  = Inner loop counter j
+# r7  = data_mem[i]
+# r8  = search pattern
+# r9  = data_mem[i+1]
+# r10 = temp 
+# r11 = temp
+# r12 = temp
+# r13 = temp
+# r14 = temp
+# r15 = accumulator register
+
+
+imm 0
+mov r0     #r0  = 0
+imm 0
+mov r1     #r1  = 0
+imm 0
+mov r2     #r2  = 0
+imm 32
+mov r3     #r3  = 32
+ldr r3     #r15 = data_mem[32]
+mov r8     #r8  = data_mem[32]
+imm 0
+mov r3     #r3  = 0
+imm 0
+mov r4     #r4  = 0
+
+# loop_outer:
+imm 0
+mov r5     #r5  = 0
+imm 0
+mov r6     #r6  = 0   j = 0
+
+# loop_inner:
+ldr r3     #r15 = data_mem[0]
+mov r7     #r7  = data_mem[0] 
+take r6    #r15 = r6 j
+lsl r7     #r15  = data_mem[0] left shift j
+mov r7     #r7   = data_mem[0] left shift j
+
+imm 248
+and r7     #r15 = data_mem[0] * b11111000
+cmp r8
+#bne not_matched 
+bne 11
+
+imm 1
+add r0
+mov r0
+imm 1
+add r2
+mov r2
+imm 1
+mov r5
+
+# not_matched:
+imm 1
+add r6
+mov r6     #r6++   j++
+imm 4
+cmp r6
+#bne loop_inner
+bne 12
+
+imm 0
+cmp r5
+#beq skip_cnt_b     # check flag
+beq 13
+imm 1
+add r1
+mov r1
+
+# skip_cnt_b:
+ldr r3     #r15 = data_mem[i] 
+mov r7     #r7 = data_mem[i] 
+imm 1
+add r3
+mov r3     #r3++
+ldr r3     
+mov r9     #r9 = data_mem[i+1]
+imm 1
+add r4
+mov r4     #r4++
+imm 32     
+cmp r4
+#beq skip_cross:
+beq 14
+
+# cross_step_a:
+imm 1      #r15 = 1
+lsr r7     #r7  = data_mem[i] right shift 1
+mov r10    #r10 = data_mem[i] right shift 1
+imm 120
+and r10
+mov r10    #r10 = r0 * b01111000
+imm 7
+lsl r9     #r15 = data_mem[i+1] left shift 7
+orr r10    #r15 = r15 + r10
+cmp r8     #compare with r8
+#bne cross_step_b 
+bne 13
+imm 1
+add r2
+mov r2
+
+# cross_step_b:
+imm 2 
+lsr r7     #r15 = data_mem[i] right shift 2
+mov r10    #r10 = data_mem[i] right shift 2
+imm 56
+and r10
+mov r10    #r10 = r0 * b00111000
+imm 6 
+lsl r9     #r15 = data_mem[i+1] left shift 6
+orr r10    #r15 = r15 + r10
+cmp r8     #compare with r8
+#bne cross_step_c 
+bne 13
+imm 1
+add r2
+mov r2
+
+# cross_step_c:
+imm 3
+lsr r7    
+mov r10    #r10 = data_mem[i] right shift 3
+imm 24
+and r10
+mov r10    #r10 = r0 * b00011000
+imm 5 
+lsl r9     #r15 = data_mem[i+1] left shift 5
+orr r10    #r15 = r15 + r10
+cmp r8     #compare with r8
+#bne cross_step_d 
+bne 13
+imm 1
+add r2
+mov r2
+
+# cross_step_d:
+imm 4
+lsr r7    
+mov r10    #r10 = data_mem[i] right shift 4
+imm 8
+and r10
+mov r10    #r10 = r0 * b00001000
+imm 4
+lsl r9     #r15 = data_mem[i+1] left shift 4
+orr r10    #r15 = r15 + r10
+cmp r8     #compare with r8
+#bne loop_outer 
+bne 13
+imm 1
+add r2
+mov r2
+#b loop_outer
+b 15
+
+#skip_cross:
+imm 33
+mov r14
+take r0
+str r14
+imm 34
+mov r14
+take r1
+str r14
+imm 35
+mov r14
+take r2
+str r14
+stop
